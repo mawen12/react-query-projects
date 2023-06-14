@@ -1,22 +1,25 @@
 import axios from 'axios';
 import { useQuery } from '@tanstack/react-query'
+import { RQSuperHeroPage } from './RQSuperHero.page';
+import { Link } from 'react-router-dom';
+import { useSuperHeroesData } from '../hooks/useSuperHeroesData';
 
-const fetchSuperHeroes = () => axios
-        .get('http://localhost:4000/superheroes')
-        .then(res => res.data);
 
 export const RQSuperHeroesPage = () => {
-    const { isLoading, data, isError, error, isFetching, isSuccess, refetch } = useQuery({
-        queryKey: ['super-heroes'],
-        queryFn: fetchSuperHeroes,
-        enabled: true,
-        cacheTime: 5000,
-        staleTime: 5000
-    });
+    const onSuccess = () => {
+        console.log('Perform side effect after data fetching')
+    }
+
+    const onError = () => {
+        console.log('Preform side effect after encountering error')
+    }
+
+    const { isLoading, fetchStatus, data, isError, error, isFetching, refetch } = useSuperHeroesData(onSuccess, onError);
 
     console.log({isLoading, isFetching})
 
-    if (isLoading || isFetching) {
+    // see https://github.com/TanStack/query/issues/3584
+    if ((isLoading && fetchStatus !== 'idle') || isFetching) {
         return <h2>Loading...</h2>
     }
 
@@ -29,9 +32,16 @@ export const RQSuperHeroesPage = () => {
             <h2>RQ Super Heroes Page</h2>
             <button onClick={refetch}>Fetch SuperHeroes</button>
             {
-                data.map(hero => {
-                    return <div key={hero.name}>{hero.name}</div>
+                data?.data.map(hero => {
+                    return (
+                    <div key={hero.id}>
+                        <Link to={`/rq-super-heroes/${hero.id}`}>
+                            {hero.name}
+                        </Link>
+                    </div>
+                    )
                 })
+                
             }
         </>
     );
